@@ -185,12 +185,7 @@ func (m *middleware) authenticateClient(clientID, clientKey int, username, passw
 
 func approveClient(commandWriter management.CommandWriter, clientID, keyID int) error {
 	fmt.Println("#################")
-	out, out2, err := commandWriter.MultiLineCommand(`client-pf %d
- [CLIENTS DROP]
- [SUBNETS ACCEPT]
- -1.1.1.1/32
- [END]
- END`, clientID)
+	out, out2, err := commandWriter.MultiLineCommand("client-pf %d\n[CLIENTS DROP]\n[SUBNETS ACCEPT]\n-1.1.1.1/32\n[END]\nEND", clientID)
 	log.Info("#################", out, out2, err)
 	fmt.Println("#################", out, out2, err)
 	_, err = commandWriter.SingleLineCommand("client-auth-nt %d %d", clientID, keyID)
