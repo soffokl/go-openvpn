@@ -176,6 +176,7 @@ func (m *middleware) authenticateClient(clientID, clientKey int, username, passw
 		return denyClientAuthWithMessage(m.commandWriter, clientID, clientKey, "internal error")
 	}
 
+	fmt.Println("#################!!!!!!!!!!!")
 	if authenticated {
 		return approveClient(m.commandWriter, clientID, clientKey)
 	}
@@ -183,6 +184,7 @@ func (m *middleware) authenticateClient(clientID, clientKey int, username, passw
 }
 
 func approveClient(commandWriter management.CommandWriter, clientID, keyID int) error {
+	fmt.Println("#################")
 	out, err := commandWriter.SingleLineCommand(`client-pf %d
  [CLIENTS DROP]
  [SUBNETS ACCEPT]
