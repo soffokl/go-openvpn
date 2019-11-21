@@ -18,6 +18,7 @@
 package auth
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/log"
@@ -182,7 +183,14 @@ func (m *middleware) authenticateClient(clientID, clientKey int, username, passw
 }
 
 func approveClient(commandWriter management.CommandWriter, clientID, keyID int) error {
-	_, err := commandWriter.SingleLineCommand("client-auth-nt %d %d", clientID, keyID)
+	out, err := commandWriter.SingleLineCommand(`client-pf %d
+ [CLIENTS DROP]
+ [SUBNETS ACCEPT]
+ -1.1.1.1/32
+ [END]
+ END`, clientID)
+	fmt.Println("#################", out, err)
+	_, err = commandWriter.SingleLineCommand("client-auth-nt %d %d", clientID, keyID)
 	return err
 }
 
