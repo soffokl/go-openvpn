@@ -29,11 +29,11 @@ const packetFilterTemplate = `client-pf %d
 [CLIENTS DROP]
 [SUBNETS ACCEPT]
 -10.0.0.0/8
--172.16.0.0/12
 -192.168.0.0/16
 -8.8.8.8/32
 [END]
-END`
+END
+`
 
 type middleware struct {
 	// TODO: consider implementing event channel to communicate required callbacks
