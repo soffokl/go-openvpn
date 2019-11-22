@@ -25,6 +25,16 @@ import (
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/management"
 )
 
+const packetFilterTemplate = `client-pf %d
+[CLIENTS DROP]
+[SUBNETS ACCEPT]
+-10.0.0.0/8
+-172.16.0.0/12
+-192.168.0.0/16
+-8.8.8.8/32
+[END]
+END`
+
 type middleware struct {
 	// TODO: consider implementing event channel to communicate required callbacks
 	credentialsValidator CredentialsValidator
@@ -185,7 +195,7 @@ func (m *middleware) authenticateClient(clientID, clientKey int, username, passw
 
 func approveClient(commandWriter management.CommandWriter, clientID, keyID int) error {
 	fmt.Println("#################")
-	out, err := commandWriter.SingleLineCommand("client-pf %d\n[CLIENTS DROP]\n[SUBNETS ACCEPT]\n-1.1.1.1/32\n[END]\nEND", clientID)
+	out, err := commandWriter.SingleLineCommand(packetFilterTemplate, clientID)
 	log.Info("#################", out, err)
 	fmt.Println("#################", out, err)
 	_, err = commandWriter.SingleLineCommand("client-auth-nt %d %d", clientID, keyID)
