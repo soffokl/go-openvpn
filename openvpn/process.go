@@ -28,7 +28,7 @@ import (
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/tunnel"
 )
 
-const openvpnManagementLogPrefix = "[openvpn-mgnmt]"
+const openvpnManagementLogPrefix = "[openvpn-mgmt]"
 const openvpnProcessLogPrefix = "[openvpn-proc]"
 
 // OpenvpnProcess represents an openvpn process manager

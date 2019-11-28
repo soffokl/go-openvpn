@@ -44,15 +44,12 @@ func newChannelConnection(cmdWriter io.Writer, cmdOutput chan string) *channelCo
 func (sc *channelConnection) SingleLineCommand(template string, args ...interface{}) (string, error) {
 	cmd := fmt.Sprintf(template, args...)
 
-	fmt.Println("!!!!!!!!!!!!!!!!!!!", cmd)
 	_, err := fmt.Fprintf(sc.cmdWriter, "%s\n", cmd)
-	fmt.Println("!!!!!!!!!!!!!!!!!!!###", err)
 	if err != nil {
 		return "", err
 	}
 
 	cmdOutput, more := <-sc.cmdOutput
-	fmt.Println("!!!!!!!!!!!!!!!!!!!####", cmdOutput, more)
 	if !more {
 		return "", errors.New("connection is gone")
 	}
