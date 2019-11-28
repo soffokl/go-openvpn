@@ -100,13 +100,13 @@ func (m *middleware) ConsumeLine(line string) (bool, error) {
 }
 
 func (m *middleware) startOfEvent(eventType server.ClientEventType, clientID int, keyID int) {
-	m.currentEvent.eventType = eventType
-	m.currentEvent.clientID = clientID
-	m.currentEvent.clientKey = keyID
+	m.currentEvent.EventType = eventType
+	m.currentEvent.ClientID = clientID
+	m.currentEvent.ClientKey = keyID
 }
 
 func (m *middleware) addEnvVar(key string, val string) {
-	m.currentEvent.env[key] = val
+	m.currentEvent.Env[key] = val
 }
 
 func (m *middleware) endOfEvent() {
@@ -119,18 +119,18 @@ func (m *middleware) reset() {
 }
 
 func (m *middleware) handleClientEvent(event server.ClientEvent) {
-	switch event.eventType {
+	switch event.EventType {
 	case server.Connect, server.Reauth:
-		username := event.env["username"]
-		password := event.env["password"]
-		err := m.authenticateClient(event.clientID, event.clientKey, username, password)
+		username := event.Env["username"]
+		password := event.Env["password"]
+		err := m.authenticateClient(event.ClientID, event.ClientKey, username, password)
 		if err != nil {
 			log.Error("Unable to authenticate client:", err)
 		}
 	case server.Established:
-		log.Info("Client with ID:", event.clientID, "connection established successfully")
+		log.Info("Client with ID:", event.ClientID, "connection established successfully")
 	case server.Disconnect:
-		log.Info("Client with ID:", event.clientID, "disconnected")
+		log.Info("Client with ID:", event.ClientID, "disconnected")
 		// NOTE: do not cleanup session after disconnect event risen by transport itself
 		//  cleanup session only by user's intent
 	}

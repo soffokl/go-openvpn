@@ -17,28 +17,28 @@
 
 package server
 
-type clientEventType string
+type ClientEventType string
 
 const (
-	Connect     = clientEventType("CONNECT")
-	Reauth      = clientEventType("REAUTH")
-	Established = clientEventType("ESTABLISHED")
-	Disconnect  = clientEventType("DISCONNECT")
-	Address     = clientEventType("ADDRESS")
+	Connect     = ClientEventType("CONNECT")
+	Reauth      = ClientEventType("REAUTH")
+	Established = ClientEventType("ESTABLISHED")
+	Disconnect  = ClientEventType("DISCONNECT")
+	Address     = ClientEventType("ADDRESS")
 	//pseudo event type ENV - that means some of above defined events are multiline and ENV messages are part of it
-	Env = clientEventType("ENV")
+	Env = ClientEventType("ENV")
 	//constant which means that id of type int is undefined
 	Undefined = -1
 )
 
 type ClientEvent struct {
-	EventType clientEventType
+	EventType ClientEventType
 	ClientID  int
 	ClientKey int
 	Env       map[string]string
 }
 
-var undefinedEvent = ClientEvent{
+var UndefinedEvent = ClientEvent{
 	ClientID:  Undefined,
 	ClientKey: Undefined,
 	Env:       make(map[string]string),

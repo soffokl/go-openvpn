@@ -30,12 +30,12 @@ var (
 	ruleClientEvent = regexp.MustCompile(`^(\w+),(.*)$`)
 )
 
-func ParseClientEvent(line string) (clientEventType, string, error) {
+func ParseClientEvent(line string) (ClientEventType, string, error) {
 	match := ruleClientEvent.FindStringSubmatch(line)
 	if len(match) < 3 {
 		return "", "", errors.New("unable to parse event: " + line)
 	}
-	event := clientEventType(match[1])
+	event := ClientEventType(match[1])
 	return event, match[2], nil
 }
 

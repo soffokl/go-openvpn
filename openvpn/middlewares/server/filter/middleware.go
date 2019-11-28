@@ -86,8 +86,8 @@ func (m *middleware) ConsumeLine(line string) (bool, error) {
 			return true, err
 		}
 
-		m.currentEvent.eventType = eventType
-		m.currentEvent.clientID = clientID
+		m.currentEvent.EventType = eventType
+		m.currentEvent.ClientID = clientID
 	case server.Env:
 		if strings.ToLower(eventData) == "end" {
 			m.handleClientEvent(m.currentEvent)
@@ -98,9 +98,9 @@ func (m *middleware) ConsumeLine(line string) (bool, error) {
 }
 
 func (m *middleware) handleClientEvent(event server.ClientEvent) {
-	switch event.eventType {
+	switch event.EventType {
 	case server.Connect, server.Reauth:
-		if err := filterSubnets(m.commandWriter, event.clientID, m.allow, m.block); err != nil {
+		if err := filterSubnets(m.commandWriter, event.ClientID, m.allow, m.block); err != nil {
 			log.Error("Unable to authenticate client:", err)
 		}
 	}
