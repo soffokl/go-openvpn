@@ -24,12 +24,16 @@ import (
 
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/log"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/management"
+	"github.com/mysteriumnetwork/go-openvpn/openvpn/middlewares/server"
 )
 
 const filterLANTemplate = `client-pf {{.ClientID}}
 [CLIENTS DROP]
 [SUBNETS ACCEPT]
-{{- range $subnet := .Subnets}}
+{{- range $subnet := .Allow}}
++{{$subnet}}
+{{- end}}
+{{- range $subnet := .Block}}
 -{{$subnet}}
 {{- end}}
 [END]
@@ -39,46 +43,19 @@ END
 var filterLAN = template.Must(template.New("filter_lan").Parse(filterLANTemplate))
 
 type middleware struct {
-	// TODO: consider implementing event channel to communicate required callbacks
 	commandWriter management.CommandWriter
-	currentEvent  clientEvent
-	filter        []string
+	currentEvent  server.ClientEvent
+	allow         []string
+	block         []string
 }
 
 // NewMiddleware creates server user_auth challenge authentication middleware
-func NewMiddleware(filter ...string) *middleware {
+func NewMiddleware(allow, block []string) *middleware {
 	return &middleware{
 		commandWriter: nil,
-		currentEvent:  undefinedEvent,
-		filter:        filter,
+		allow:         allow,
+		block:         block,
 	}
-}
-
-type clientEventType string
-
-const (
-	connect     = clientEventType("CONNECT")
-	reauth      = clientEventType("REAUTH")
-	established = clientEventType("ESTABLISHED")
-	disconnect  = clientEventType("DISCONNECT")
-	address     = clientEventType("ADDRESS")
-	//pseudo event type ENV - that means some of above defined events are multiline and ENV messages are part of it
-	env = clientEventType("ENV")
-	//constant which means that id of type int is undefined
-	undefined = -1
-)
-
-type clientEvent struct {
-	eventType clientEventType
-	clientID  int
-	clientKey int
-	env       map[string]string
-}
-
-var undefinedEvent = clientEvent{
-	clientID:  undefined,
-	clientKey: undefined,
-	env:       make(map[string]string),
 }
 
 func (m *middleware) Start(commandWriter management.CommandWriter) error {
@@ -97,58 +74,48 @@ func (m *middleware) ConsumeLine(line string) (bool, error) {
 
 	clientLine := strings.TrimPrefix(line, ">CLIENT:")
 
-	eventType, eventData, err := parseClientEvent(clientLine)
+	eventType, eventData, err := server.ParseClientEvent(clientLine)
 	if err != nil {
 		return true, err
 	}
 
 	switch eventType {
-	case connect, reauth:
-		ID, key, err := parseIDAndKey(eventData)
+	case server.Connect, server.Reauth:
+		clientID, _, err := server.ParseIDAndKey(eventData)
 		if err != nil {
 			return true, err
 		}
 
-		m.startOfEvent(eventType, ID, key)
-	case env:
+		m.currentEvent.eventType = eventType
+		m.currentEvent.clientID = clientID
+	case server.Env:
 		if strings.ToLower(eventData) == "end" {
-			m.endOfEvent()
-			return true, nil
+			m.handleClientEvent(m.currentEvent)
 		}
 	}
 
 	return true, nil
 }
 
-func (m *middleware) startOfEvent(eventType clientEventType, clientID int, keyID int) {
-	m.currentEvent.eventType = eventType
-	m.currentEvent.clientID = clientID
-	m.currentEvent.clientKey = keyID
-}
-
-func (m *middleware) endOfEvent() {
-	m.handleClientEvent(m.currentEvent)
-	m.reset()
-}
-
-func (m *middleware) reset() {
-	m.currentEvent = undefinedEvent
-}
-
-func (m *middleware) handleClientEvent(event clientEvent) {
+func (m *middleware) handleClientEvent(event server.ClientEvent) {
 	switch event.eventType {
-	case connect, reauth:
-		if err := filterSubnets(m.commandWriter, event.clientID, m.filter); err != nil {
+	case server.Connect, server.Reauth:
+		if err := filterSubnets(m.commandWriter, event.clientID, m.allow, m.block); err != nil {
 			log.Error("Unable to authenticate client:", err)
 		}
 	}
 }
 
-func filterSubnets(commandWriter management.CommandWriter, clientID int, subnets []string) error {
+func filterSubnets(commandWriter management.CommandWriter, clientID int, allow, block []string) error {
 	data := struct {
 		ClientID int
-		Subnets  []string
-	}{ClientID: clientID, Subnets: subnets}
+		Allow    []string
+		Block    []string
+	}{
+		ClientID: clientID,
+		Allow:    allow,
+		Block:    block,
+	}
 
 	var tpl bytes.Buffer
 	if err := filterLAN.Execute(&tpl, data); err != nil {
